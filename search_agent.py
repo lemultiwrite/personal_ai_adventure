@@ -219,22 +219,24 @@ def main():
         # FIX: this block was un-indented, causing stream_assistant_response()
         # to fire on every loop iteration instead of only on forced retries.
         if response.strip() == '0':
-            print(f'{Fore.LIGHTRED_EX}ASSISTANT NEEDS MORE DATA, FORCING SEARCH...{Style.RESET_ALL}')
-            context = ai_search()
-            assistant_convo = assistant_convo[:-2]  # remove the '0' response and last user msg
+    print(f'{Fore.LIGHTRED_EX}ASSISTANT NEEDS MORE DATA, FORCING SEARCH...{Style.RESET_ALL}')
+    
+    original_prompt = assistant_convo[-2]['content']  # grab user msg before slicing
+    assistant_convo = assistant_convo[:-2]
+    
+    context = ai_search()
 
-            if context:
-                forced_prompt = f'SEARCH RESULT: {context} \n\nUSER_PROMPT: {assistant_convo[-1]["content"]}'
-            else:
-                # FIX: was assistant_convo[:-1]["content"] which tried to subscript a list
-                forced_prompt = (
-                    f'USER PROMPT: \n{assistant_convo[-1]["content"]} \n\nFAILED SEARCH: \nThe '
-                    'AI search model was unable to extract any reliable data. Explain that '
-                    'and ask if the user would like you to search again.'
-                )
+    if context:
+        forced_prompt = f'SEARCH RESULT: {context} \n\nUSER_PROMPT: {original_prompt}'
+    else:
+        forced_prompt = (
+            f'USER PROMPT: \n{original_prompt} \n\nFAILED SEARCH: \nThe '
+            'AI search model was unable to extract any reliable data. Explain that '
+            'and ask if the user would like you to search again.'
+        )
 
-            assistant_convo.append({'role': 'user', 'content': forced_prompt})
-            stream_assistant_response()
+    assistant_convo.append({'role': 'user', 'content': forced_prompt})
+    stream_assistant_response()
 
 if __name__ == '__main__':
     main()
